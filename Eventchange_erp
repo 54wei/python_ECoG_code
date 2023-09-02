@@ -1,0 +1,12 @@
+# 2023/9/2,将event移至最后一个音后的ERP。
+import mne
+import matplotlib.pyplot as plt
+from matplotlib import colormaps
+from mne_bids import BIDSPath, read_raw_bids
+import os
+import numpy as np
+import tkinter as tk
+import tkinter.filedialog
+
+# 选择文件夹
+file_path = '/Users/wxc/Desktop/mne_file_0821'

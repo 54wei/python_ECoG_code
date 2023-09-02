@@ -1,0 +1,70 @@
+# 2023-8-28
+# 找到所有P50试次的值，画出小提琴图，平均数和中位数。40～60ms
+import mne
+import matplotlib.pyplot as plt
+from matplotlib import colormaps
+from mne_bids import BIDSPath, read_raw_bids
+import os
+import numpy as np
+import tkinter as tk
+import tkinter.filedialog
+import seaborn as sns
+
+
+# 选择文件夹
+# # initialdir = 'F:/ZWQ/anesthesia/anesthesia_profosol/20230706' # 默认路径，没有就赋值''
+# initialdir = ''
+# if initialdir != '':
+#     file_path = tk.filedialog.askdirectory(title='选择mne_file文件夹:', initialdir=initialdir)
+# else:
+#     file_path = tk.filedialog.askdirectory(title='选择mne_file文件夹:')
+file_path = '/Users/wxc/Desktop/mne_file_0821'
+
+# Read the data，文件名字
+file_names = os.listdir(file_path)
+for file_name_now in file_names.copy():
+    if file_name_now[-16:] != '(badChoosed).fif':
+        file_names.remove(file_name_now)
+
+# 读取epoch的数据
+
+epochs_list = []
+for file_name in file_names:
+    epochs_now = mne.read_epochs(file_path+ '/' + file_name)
+    epochs_list.append(epochs_now)
+#
+epochs_all = mne.concatenate_epochs (epochs_list) # 使用mne.concatenate_epochs函数来合并列表中的所有epoch文件
+
+# 拒绝250*10-6以上的值
+reject_criteria = dict(
+    ecog = 250e-6
+)
+epochs_all.drop_bad(reject=reject_criteria)
+
+#提取5Hz条件的40ms~60ms的数据，2000ms的数据有1001个点，采样率为50hz
+# ERP_all_1 = epochs_all['cond_1']
+ERP_all_2 = epochs_all['cond_2']
+
+ERP_section = ERP_all_2._data[:,:,int(500*1.04):int(500*1.06)]
+# ERP_section = ERP_all_1._data[:,:,int(500*1.24):int(500*1.26)]
+# 第三维取平均值，30epoch*128*10时间点
+# ERP_section_ave = np.mean(ERP_section,axis = 2)
+
+# 第三维取中位数
+ERP_section_ave = np.median(ERP_section,axis = 2)
+
+ERP_section_med = ERP_section_ave[:,28:32]
+# 使用violinplot函数绘制小提琴图，并使用DataFrame对象作为数据参数，指定x参数为列名，指定palette参数为"Set3"来设置颜色方案
+ax = sns.violinplot(data=ERP_section_med,trim = False)
+
+# 设置字体为SimHei
+# # plt.rcParams['font.sans-serif'] = ['SimHei']
+# ax = sns.violinplot(data=[Cancan_impedance,Dandan_impedance] )
+
+# 使用stripplot函数绘制散点图，并设置jitter,size,color等参数
+sns.stripplot(data=ERP_section_med, jitter=0.1, size=5, color='red', ax=ax)
+# 修改横坐标的标签
+# ax.set_xticklabels(['P50_amplitude'])
+# plt.xticks(fontsize=14)
+# 显示图形
+plt.show()
